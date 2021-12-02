@@ -1,0 +1,74 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace ClipsFormsExample
+{
+    public partial class AskingDialog : Form
+    {
+        public AskingDialog()
+        {
+        }
+        Dictionary<int, InitialFact> oppositeFacts;
+        bool areFeatures;
+        public AskingDialog(string description, List<string> answers, bool isRequired)
+        {
+            InitializeComponent();
+            oppositeFacts = new Dictionary<int, InitialFact>();
+            this.areFeatures = !isRequired;
+            List<KeyValuePair<int, InitialFact>> facts = new List<KeyValuePair<int, InitialFact>>();
+            foreach (var entry in answers)
+            {
+                var splitted = entry.Split('-');
+                
+                var fact = new KeyValuePair<int, InitialFact>(int.Parse(splitted[0]), new InitialFact(splitted[1], InitialFactType.FEATURE));
+                if (areFeatures)
+                {
+                    oppositeFacts.Add(int.Parse(splitted[2]), new InitialFact(splitted[3], InitialFactType.OPPOSITE_FEATURE));
+                    fact.Value.oppositeFact = int.Parse(splitted[2]);
+                }
+                facts.Add(fact);
+            }
+            labelDescription.Text = description;
+            checkedListBox.Items.AddRange(facts.Select(x => new InitialFactWrapper(x)).ToArray());
+            
+            if (isRequired)
+            {
+                btnClose.Enabled = false;
+            }
+        }
+
+        public List<KeyValuePair<int, Fact>> SelectedFacts { get; set; }
+
+        private void btnClose_Click(object sender, EventArgs e)
+        {
+            
+            if (areFeatures)
+            {
+                var selectedFeatures =  checkedListBox.CheckedItems.Cast<InitialFactWrapper>().Select(x => x.fact).ToList();
+                var unselectedFeatures = checkedListBox.Items.Cast<InitialFactWrapper>().Select(x => x.fact).Where(x => !selectedFeatures.Contains(x)).Select(x => oppositeFacts.GetEntry((x.Value.oppositeFact)));
+                selectedFeatures.AddRange(unselectedFeatures);
+                SelectedFacts = selectedFeatures.Select(x => new KeyValuePair<int, Fact>(x.Key, x.Value)).ToList();
+            }
+            else
+            {
+                SelectedFacts = checkedListBox.CheckedItems.Cast<InitialFactWrapper>().Select(x => x.fact).Select(x => new KeyValuePair<int, Fact>(x.Key, x.Value)).ToList();
+            }
+            Close();
+        }
+
+        private void checkedListBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if(checkedListBox.SelectedItems.Count > 0)
+            {
+                btnClose.Enabled = true;
+            }
+        }
+    }
+}
