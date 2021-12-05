@@ -86,6 +86,7 @@
 (deftemplate fact
 	(slot num)
 	(slot description)
+	(slot certainty)
 )
 
 (deffacts start-fact
@@ -176,5 +177,3 @@
 )
 
 ;___________________________________________________________________________
-
-

@@ -105,6 +105,7 @@
       <DependentUpon>ClipsFormsExample.cs</DependentUpon>
     </Compile>
     <Compile Include="Models.cs" />
+    <Compile Include="Parsing.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="AskingDialog.resx">
