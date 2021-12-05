@@ -25,10 +25,12 @@ namespace ClipsFormsExample
     public class Fact
     {
         public String factDescription;
+        public double certainty;
 
-        public Fact(String fact)
+        public Fact(String fact, double certainty = 0)
         {
             this.factDescription = fact;
+            this.certainty = certainty;
         }
     }
 
@@ -78,7 +80,7 @@ namespace ClipsFormsExample
 
         public override string ToString()
         {
-            return fact.Value.factDescription;
+            return fact.Value.factDescription + " [" + Math.Round(fact.Value.certainty,2) + "]";
         }
     }
 

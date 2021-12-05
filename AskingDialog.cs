@@ -16,13 +16,14 @@ namespace ClipsFormsExample
         {
         }
         Dictionary<int, InitialFact> oppositeFacts;
+        List<KeyValuePair<int, InitialFact>> facts;
         bool areFeatures;
         public AskingDialog(string description, List<string> answers, bool isRequired)
         {
             InitializeComponent();
             oppositeFacts = new Dictionary<int, InitialFact>();
             this.areFeatures = !isRequired;
-            List<KeyValuePair<int, InitialFact>> facts = new List<KeyValuePair<int, InitialFact>>();
+            facts = new List<KeyValuePair<int, InitialFact>>();
             foreach (var entry in answers)
             {
                 var splitted = entry.Split('-');
@@ -42,6 +43,7 @@ namespace ClipsFormsExample
             {
                 btnClose.Enabled = false;
             }
+            checkedListBox.SelectedIndex = 0;
         }
 
         public List<KeyValuePair<int, Fact>> SelectedFacts { get; set; }
@@ -51,24 +53,35 @@ namespace ClipsFormsExample
             
             if (areFeatures)
             {
-                var selectedFeatures =  checkedListBox.CheckedItems.Cast<InitialFactWrapper>().Select(x => x.fact).ToList();
+                var selectedFeatures =  checkedListBox.Items.Cast<InitialFactWrapper>().Select(x => x.fact).ToList();
                 var unselectedFeatures = checkedListBox.Items.Cast<InitialFactWrapper>().Select(x => x.fact).Where(x => !selectedFeatures.Contains(x)).Select(x => oppositeFacts.GetEntry((x.Value.oppositeFact)));
                 selectedFeatures.AddRange(unselectedFeatures);
                 SelectedFacts = selectedFeatures.Select(x => new KeyValuePair<int, Fact>(x.Key, x.Value)).ToList();
             }
             else
             {
-                SelectedFacts = checkedListBox.CheckedItems.Cast<InitialFactWrapper>().Select(x => x.fact).Select(x => new KeyValuePair<int, Fact>(x.Key, x.Value)).ToList();
+                SelectedFacts = checkedListBox.Items.Cast<InitialFactWrapper>().Select(x => x.fact).Where(f => f.Value.certainty > 0).Select(x => new KeyValuePair<int, Fact>(x.Key, x.Value)).ToList();
             }
             Close();
         }
-
+        int lastSelectedIndex = 0;
         private void checkedListBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             if(checkedListBox.SelectedItems.Count > 0)
             {
                 btnClose.Enabled = true;
             }
+            if(checkedListBox.SelectedIndex != -1)
+            {
+                lastSelectedIndex = checkedListBox.SelectedIndex;
+            }
+            trackBar.Value = (int)(facts[lastSelectedIndex].Value.certainty * 100);
+        }
+
+        private void trackBar_Scroll(object sender, EventArgs e)
+        {
+            facts[lastSelectedIndex].Value.certainty = (trackBar.Value * 1.0) / 100;
+            checkedListBox.Items[lastSelectedIndex] = new InitialFactWrapper(facts[lastSelectedIndex]);
         }
     }
 }
