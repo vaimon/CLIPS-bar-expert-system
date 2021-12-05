@@ -13,12 +13,14 @@ namespace ClipsFormsExample
         public List<int> premises;
         public int conclusion;
         public String comment;
+        public double ruleCertainty;
 
-        public Rule(List<int> premises, int conclusion, string comment)
+        public Rule(List<int> premises, int conclusion, string comment, double ruleCertainty)
         {
             this.premises = premises;
             this.conclusion = conclusion;
-            this.comment = comment;
+            this.comment = comment.Replace('&', 'и').Replace('(', '/').Replace(')', '/');
+            this.ruleCertainty = ruleCertainty;
         }
     }
 
@@ -29,7 +31,7 @@ namespace ClipsFormsExample
 
         public Fact(String fact, double certainty = 0)
         {
-            this.factDescription = fact;
+            this.factDescription = fact.Replace('&', 'и').Replace('(', '/').Replace(')', '/');
             this.certainty = certainty;
         }
     }

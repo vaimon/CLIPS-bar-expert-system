@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -39,16 +40,6 @@ namespace ClipsFormsExample
             nextButton.Enabled = state;
         }
 
-        string factToClipsFact(int factNumber)
-        {
-            return $"(fact (num {factNumber})(description \"{facts[factNumber].factDescription.Replace('&', 'и').Replace('(', '/').Replace(')', '/')}\"))";
-        }
-
-        string factToReadableFact(int factNumber)
-        {
-            return $"/f-{factNumber}: {facts[factNumber].factDescription.Replace('&', 'и').Replace('(', '/').Replace(')', '/')}/";
-        }
-        
         void askSomeQuestion(string message, List<string> answers)
         {
             List<KeyValuePair<int, Fact>> selectedFacts;
@@ -81,7 +72,7 @@ namespace ClipsFormsExample
             selectedFacts = form.SelectedFacts;
             foreach (var pair in selectedFacts)
             {
-                clips.Eval($"(assert {factToClipsFact(pair.Key)})");
+                clips.Eval($"(assert (fact (num {pair.Key})(description \"{pair.Value.factDescription.Replace('&', 'и').Replace('(', '/').Replace(')', '/')}\")(certainty {Math.Round(pair.Value.certainty, 2).ToString(CultureInfo.InvariantCulture)})))");
             }
         }
 

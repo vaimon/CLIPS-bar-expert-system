@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -53,13 +54,13 @@ namespace ClipsFormsExample
                     }
                     else if (data[0].StartsWith("r"))
                     {
-                        if (data.Count() != 4)
+                        if (data.Count() != 5)
                         {
                             throw new ArgumentException("В правиле поплыла структура");
                         }
 
                         var premises = data[1].Split(',').Select(x => int.Parse(x.Split('-')[1])).ToList();
-                        rules.Add(int.Parse(id[1]), new Rule(premises, int.Parse(data[2].Split('-')[1]), data[3]));
+                        rules.Add(int.Parse(id[1]), new Rule(premises, int.Parse(data[2].Split('-')[1]), data[3],double.Parse(data[4], CultureInfo.InvariantCulture)));
                     }
                     else
                     {
@@ -85,23 +86,30 @@ namespace ClipsFormsExample
                 {
                     sb.AppendLine("(declare (salience 40))");
                 }
+
+                StringBuilder sbCertainty = new StringBuilder();
                 for (var i = 0; i < rule.Value.premises.Count; i++)
                 {
-                    sb.AppendLine(factToClipsFact(rule.Value.premises[i]));
+                    sb.AppendLine($"(fact (num {rule.Value.premises[i]})(description \"{facts[rule.Value.premises[i]].factDescription}\")(certainty ?cert{i}))");
+                    sbCertainty.Append($"?cert{i} ");
                 }
-
                 sb.AppendLine("=>");
-                sb.AppendLine($"(assert {factToClipsFact(rule.Value.conclusion)})");
+                sb.AppendLine($"(bind ?rule-cert (* (min {sbCertainty.ToString()}) {rule.Value.ruleCertainty.ToString(CultureInfo.InvariantCulture)}))");
+                sb.AppendLine($"(assert (fact (num {rule.Value.conclusion})(description \"{facts[rule.Value.conclusion].factDescription}\")(certainty ?rule-cert)))");
                 if (facts[rule.Value.conclusion] is FiniteFact)
                 {
-                    sb.AppendLine($"(assert (appendmessagehalt \"#[Применили правило #{rule.Key}: {string.Join(" и ", rule.Value.premises.Select(x => factToReadableFact(x)).ToArray())} \n => \n {factToReadableFact(rule.Value.conclusion)},\n или, если по человечески: {rule.Value.comment.Replace('&', 'и').Replace('(', '/').Replace(')', '/')}]\n\"))");
-
+                    sb.Append($"(assert (appendmessagehalt (str-cat\"#");
                 }
                 else
                 {
-                    sb.AppendLine($"(assert (appendmessagehalt \"[Применили правило #{rule.Key}: {string.Join(" и ", rule.Value.premises.Select(x => factToReadableFact(x)).ToArray())} \n => \n {factToReadableFact(rule.Value.conclusion)},\n или, если по человечески: {rule.Value.comment.Replace('&', 'и').Replace('(', '/').Replace(')', '/')}]\n\"))");
-
+                    sb.Append($"(assert (appendmessagehalt (str-cat\"");
                 }
+                sb.AppendLine($"[Применили правило #{rule.Key}:");
+                for (int i = 0; i < rule.Value.premises.Count; i++)
+                {
+                    sb.AppendLine($"/f-{rule.Value.premises[i]}: {facts[rule.Value.premises[i]].factDescription} [~\" ?cert{i} \"]/");
+                }
+                sb.AppendLine($"=> \n /f-{rule.Value.conclusion}: {facts[rule.Value.conclusion].factDescription} [~\" ?rule-cert \"]/,\n или, если по человечески: {rule.Value.comment}]\")))");
                 sb.AppendLine(")");
                 sb.AppendLine("");
             }
