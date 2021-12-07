@@ -93,9 +93,13 @@ namespace ClipsFormsExample
                     sb.AppendLine($"(fact (num {rule.Value.premises[i]})(description \"{facts[rule.Value.premises[i]].factDescription}\")(certainty ?cert{i}))");
                     sbCertainty.Append($"?cert{i} ");
                 }
+                
                 sb.AppendLine("=>");
                 sb.AppendLine($"(bind ?rule-cert (* (min {sbCertainty.ToString()}) {rule.Value.ruleCertainty.ToString(CultureInfo.InvariantCulture)}))");
-                sb.AppendLine($"(assert (fact (num {rule.Value.conclusion})(description \"{facts[rule.Value.conclusion].factDescription}\")(certainty ?rule-cert)))");
+                sb.AppendLine($"(bind ?ex-fact (nth$ 1 (find-fact ((?f fact))(eq ?f:num {rule.Value.conclusion}))))");
+                sb.AppendLine($"(if (neq ?ex-fact nil)");
+                sb.AppendLine("then (bind ?ex-cert (fact-slot-value ?ex-fact certainty)) (modify ?ex-fact (certainty (-(+ ?ex-cert ?rule-cert)(* ?ex-cert ?rule-cert))))");
+                sb.AppendLine($"else (assert (fact (num {rule.Value.conclusion})(description \"{facts[rule.Value.conclusion].factDescription}\")(certainty ?rule-cert)))\n)");
                 if (facts[rule.Value.conclusion] is FiniteFact)
                 {
                     sb.Append($"(assert (appendmessagehalt (str-cat\"#");

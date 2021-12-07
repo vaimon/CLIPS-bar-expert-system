@@ -41,10 +41,11 @@ namespace ClipsFormsExample
         public InitialFactType factType;
         public int oppositeFact;
 
-        public InitialFact(String fact, InitialFactType type, int oppositeFact = -1) : base(fact)
+        public InitialFact(String fact, InitialFactType type, int oppositeFact = -1, double certainty = 0.0) : base(fact)
         {
             this.factType = type;
             this.oppositeFact = oppositeFact;
+            this.certainty = certainty;
         }
     }
 

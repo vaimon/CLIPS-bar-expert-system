@@ -31,7 +31,7 @@ namespace ClipsFormsExample
                 var fact = new KeyValuePair<int, InitialFact>(int.Parse(splitted[0]), new InitialFact(splitted[1], InitialFactType.FEATURE));
                 if (areFeatures)
                 {
-                    oppositeFacts.Add(int.Parse(splitted[2]), new InitialFact(splitted[3], InitialFactType.OPPOSITE_FEATURE));
+                    oppositeFacts.Add(int.Parse(splitted[2]), new InitialFact(splitted[3], InitialFactType.OPPOSITE_FEATURE, certainty: 1.0));
                     fact.Value.oppositeFact = int.Parse(splitted[2]);
                 }
                 facts.Add(fact);
@@ -53,8 +53,8 @@ namespace ClipsFormsExample
             
             if (areFeatures)
             {
-                var selectedFeatures =  checkedListBox.Items.Cast<InitialFactWrapper>().Select(x => x.fact).ToList();
-                var unselectedFeatures = checkedListBox.Items.Cast<InitialFactWrapper>().Select(x => x.fact).Where(x => !selectedFeatures.Contains(x)).Select(x => oppositeFacts.GetEntry((x.Value.oppositeFact)));
+                var selectedFeatures =  checkedListBox.Items.Cast<InitialFactWrapper>().Select(x => x.fact).Where(x => x.Value.certainty > 0).ToList();
+                var unselectedFeatures = checkedListBox.Items.Cast<InitialFactWrapper>().Select(x => x.fact).Where(x => !selectedFeatures.Contains(x)).Select(x => oppositeFacts.GetEntry(x.Value.oppositeFact));
                 selectedFeatures.AddRange(unselectedFeatures);
                 SelectedFacts = selectedFeatures.Select(x => new KeyValuePair<int, Fact>(x.Key, x.Value)).ToList();
             }

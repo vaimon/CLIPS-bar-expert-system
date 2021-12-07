@@ -72,7 +72,9 @@ namespace ClipsFormsExample
             selectedFacts = form.SelectedFacts;
             foreach (var pair in selectedFacts)
             {
-                clips.Eval($"(assert (fact (num {pair.Key})(description \"{pair.Value.factDescription.Replace('&', 'и').Replace('(', '/').Replace(')', '/')}\")(certainty {Math.Round(pair.Value.certainty, 2).ToString(CultureInfo.InvariantCulture)})))");
+                var x =
+                    $"(assert (fact (num {pair.Key})(description \"{pair.Value.factDescription}\")(certainty {Math.Round(pair.Value.certainty, 2).ToString(CultureInfo.InvariantCulture)})))";
+                clips.Eval($"(assert (fact (num {pair.Key})(description \"{pair.Value.factDescription}\")(certainty {Math.Round(pair.Value.certainty, 2).ToString(CultureInfo.InvariantCulture)})))");
             }
         }
 
