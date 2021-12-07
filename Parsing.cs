@@ -90,7 +90,7 @@ namespace ClipsFormsExample
                 StringBuilder sbCertainty = new StringBuilder();
                 for (var i = 0; i < rule.Value.premises.Count; i++)
                 {
-                    sb.AppendLine($"(fact (num {rule.Value.premises[i]})(description \"{facts[rule.Value.premises[i]].factDescription}\")(certainty ?cert{i}))");
+                    sb.AppendLine($"(fact (num {rule.Value.premises[i]})(description ?desc{i})(certainty ?cert{i}))");
                     sbCertainty.Append($"?cert{i} ");
                 }
                 
@@ -111,7 +111,7 @@ namespace ClipsFormsExample
                 sb.AppendLine($"[Применили правило #{rule.Key}:");
                 for (int i = 0; i < rule.Value.premises.Count; i++)
                 {
-                    sb.AppendLine($"/f-{rule.Value.premises[i]}: {facts[rule.Value.premises[i]].factDescription} [~\" ?cert{i} \"]/");
+                    sb.AppendLine($"/f-{rule.Value.premises[i]}: \" ?desc{i} \" [~\" ?cert{i} \"]/");
                 }
                 sb.AppendLine($"=> \n /f-{rule.Value.conclusion}: {facts[rule.Value.conclusion].factDescription} [~\" ?rule-cert \"]/,\n или, если по человечески: {rule.Value.comment}]\")))");
                 sb.AppendLine(")");
