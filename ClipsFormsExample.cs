@@ -10,13 +10,15 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using CLIPSNET;
-
+using System.Speech.Synthesis;
 
 namespace ClipsFormsExample
 {
     public partial class ClipsFormsExample : Form
     {
         private CLIPSNET.Environment clips = new CLIPSNET.Environment();
+        private SpeechSynthesizer roboWoman;
+        
         Dictionary<int, Fact> facts;
         Dictionary<int, Rule> rules;
         private string clipsCode = "";
@@ -26,10 +28,32 @@ namespace ClipsFormsExample
         public ClipsFormsExample()
         {
             InitializeComponent();
+            roboWoman = new SpeechSynthesizer();
+            roboWoman.SetOutputToDefaultAudioDevice(); 
+            // Если вдруг у вас нет Павла - посмотрите что вам доступно
+            var voices = roboWoman.GetInstalledVoices();
+            roboWoman.SelectVoice("Microsoft Irina Desktop");
+            roboWoman.Rate = 4;
             facts = new Dictionary<int, Fact>();
             rules = new Dictionary<int, Rule>();
             nextButton.Text = "Старт";
-            setState(false);
+            setState(false); 
+            
+            //roboWoman.SpeakAsync("Здравствуйте, Максим Валентинович! Я - Ирина. И я направлю вас на путь истинный, а точнее - в бар.");
+            var builder = new PromptBuilder();
+            builder.AppendText("Здравствуйте, Максим ");
+            builder.AppendTextWithPronunciation("Валентинович","vəlʲɪnʲˈtʲinəvʲɪt͡ɕ");
+            builder.AppendBreak(PromptBreak.Medium);
+            builder.AppendText("Я - Ирина");
+            builder.AppendBreak(PromptBreak.Medium);
+            builder.AppendText("И я");
+            builder.AppendTextWithPronunciation("направлю","nɐˈpravlʲʉ");
+            builder.AppendText("вас на путь истинный");
+            builder.AppendBreak(PromptBreak.Small);
+            builder.AppendText("А точнее - в бар.");
+            // Speak the contents of the prompt synchronously.
+            roboWoman.SpeakAsync(builder);
+            
         }
 
         void setState(bool state)
@@ -77,7 +101,22 @@ namespace ClipsFormsExample
                 clips.Eval($"(assert (fact (num {pair.Key})(description \"{pair.Value.factDescription}\")(certainty {Math.Round(pair.Value.certainty, 2).ToString(CultureInfo.InvariantCulture)})))");
             }
         }
+        int iterationCounter = 0;
 
+        string getRuleCountDescription(int quantity)
+        {
+            if (quantity % 10 == 1 && quantity != 11)
+            {
+                return $"{quantity} правило";
+            }
+            if ((quantity % 10 == 2 && quantity != 12) || (quantity % 10 == 3 && quantity != 13) || (quantity % 10 == 4 && quantity != 14))
+            {
+                return $"{quantity} правила";
+            }
+            return $"{quantity} правил";
+        }
+
+        private List<KeyValuePair<string,double>> finalChoice;
         private bool HandleResponse()
         {
             //  Вытаскиаваем факт из ЭС
@@ -88,6 +127,11 @@ namespace ClipsFormsExample
             MultifieldValue vamf = (MultifieldValue) fv["answers"];
             if (damf.Count == 0)
             {
+                roboWoman.SpeakAsync($"Мы применили {getRuleCountDescription(iterationCounter)} и дошли до конца. Вот, что получилось");
+                foreach (var bar in finalChoice.OrderByDescending(x => x.Value))
+                {
+                    roboWoman.SpeakAsync($"С уверенностью {Math.Round(bar.Value * 100,2)}% вам подойдёт {bar.Key}");
+                }
                 return false;
             }
             //outputBox.Text += "Новая итерация : " + System.Environment.NewLine;
@@ -98,6 +142,20 @@ namespace ClipsFormsExample
                 string message = Encoding.UTF8.GetString(bytes);
                 if (message.StartsWith("#ask"))
                 {
+                    if (message != "#ask_features")
+                    {
+                        roboWoman.SpeakAsync($"Мы применили {getRuleCountDescription(iterationCounter)}");
+                    }
+                    else
+                    {
+                        var builder = new PromptBuilder();
+                        builder.AppendTextWithPronunciation("Установите", "ʊstənɐˈvʲitʲe");
+                        builder.AppendBreak(PromptBreak.Medium);
+                        builder.AppendText("насколько уверенно вы хотите видеть каждую из фич");
+                        roboWoman.SpeakAsync(builder);
+                    }
+                    
+                    iterationCounter = 0;
                     var phrases = new List<string>();
                     if (vamf.Count > 0)
                     {
@@ -113,13 +171,15 @@ namespace ClipsFormsExample
                         }
                         outputBox.AppendText("----------------------------------------------------" + System.Environment.NewLine, Color.DarkBlue);
                     }
+                    
                     askSomeQuestion(message, phrases);
                     outputBox.AppendText(message + System.Environment.NewLine, Color.DarkBlue);
                 }
                 else if (message.StartsWith("#"))
                 {
-
                     outputBox.AppendText(message + System.Environment.NewLine, Color.DarkRed);
+                    var parts = message.Split('|');
+                    finalChoice.Add(new KeyValuePair<string,double>(parts[1],double.Parse(parts[3],CultureInfo.InvariantCulture)));
                 }
                 else
                 {
@@ -133,6 +193,7 @@ namespace ClipsFormsExample
 
             //if (vamf.Count == 0)
                 clips.Eval("(assert (clearmessage))");
+            iterationCounter++;
             return true;
         }
         bool isFirstTime = true;
@@ -154,6 +215,9 @@ namespace ClipsFormsExample
         private void resetBtn_Click(object sender, EventArgs e)
         {
             outputBox.Text = "Выполнены команды Clear и Reset." + System.Environment.NewLine;
+            roboWoman.SpeakAsync("Начинаем веселиться!");
+            finalChoice = new List<KeyValuePair<string, double>>();
+            iterationCounter = 0;
             //  Здесь сохранение в файл, и потом инициализация через него
             clips.Clear();
 
@@ -171,6 +235,11 @@ namespace ClipsFormsExample
                 loadDB();
                 codeBox.Text = clipsCode = generateCLIPScode();
                 setState(true);
+                var builder = new PromptBuilder();
+                builder.AppendTextWithPronunciation("Смотрите", "smɐtrʲiˈtʲe");
+                builder.AppendText("какой красивый код я");
+                builder.AppendTextWithPronunciation("нагенерировала","nɐɡʲɪnʲɪrʲiˈrovələ");
+                roboWoman.SpeakAsync(builder);
             }
         }
 
