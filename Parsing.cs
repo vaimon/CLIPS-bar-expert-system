@@ -60,7 +60,7 @@ namespace ClipsFormsExample
                         }
 
                         var premises = data[1].Split(',').Select(x => int.Parse(x.Split('-')[1])).ToList();
-                        rules.Add(int.Parse(id[1]), new Rule(premises, int.Parse(data[2].Split('-')[1]), data[3],double.Parse(data[4], CultureInfo.InvariantCulture)));
+                        rules.Add(int.Parse(id[1]), new Rule(premises, int.Parse(data[2].Split('-')[1]), data[3],processRuleCertainty(data[4])));
                     }
                     else
                     {
@@ -68,6 +68,17 @@ namespace ClipsFormsExample
                     }
                 }
             }
+        }
+
+        double processRuleCertainty(string input)
+        {
+            var original = double.Parse(input, CultureInfo.InvariantCulture);
+            var scaled = (2 - original) * original; // Увеличиваем на (1 - x)%
+            if (scaled > 1)
+            {
+                return 1;
+            }
+            return scaled;
         }
         
         private string generateCLIPScode()
